@@ -1,4 +1,4 @@
-#!Flask/bin/python
+#!Baseball_env/bin/python
 from flask import Flask
 from flask_cors import CORS, cross_origin
 from flaskext.mysql import MySQL
