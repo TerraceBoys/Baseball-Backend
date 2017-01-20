@@ -38,32 +38,83 @@ class GameStateSchema(ma.ModelSchema):
 		model = GameState
 
 game_state_schema = GameStateSchema()
+game_state = GameState.query.order_by('-gs_id').first()
 
 @app.route('/')
 def index():
+	return "Hello World"
+
+@app.route('/baseball')
+def baseball():
     return "Welcome to Baseball with the Terrace Boys!"
 
-@app.route('/new-game')
+@app.route('/baseball/new-game')
 def new_game():
+	global game_state
 	game_state = GameState()
-	db.session.add(game_state)
-	db.session.commit()
-
-	current = GameState.query.order_by('-gs_id').first()
-
-	return current_game_state()
+	
+	return write_game_state()
     
-@app.route('/game-state/<int:gs_id>')
+@app.route('/baseball/game-state/<int:gs_id>')
 def get_game_state(gs_id):
+	global game_state
 	game_state = GameState.query.filter_by(id = gs_id).first()
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
-@app.route('/game-state/current')
+@app.route('/baseball/game-state/current')
 def current_game_state():
-	current = GameState.query.order_by('-gs_id').first()
+	global game_state
+	game_state = GameState.query.order_by('-gs_id').first()
 	
-	return jsonify(game_state_schema.dump(current).data)
+	return jsonify(game_state_schema.dump(game_state).data)
+
+@app.route('/baseball/out/<int:gs_id>')
+def out(gs_id):
+	global game_state
+	if gs_id != game_state.id:
+		game_state = GameState.query.filter_by(id = gs_id).first()
+
+	incr_out()
+
+	return write_game_state()
+
+@app.route('/baseball/strike/<int:gs_id>')
+def strike(gs_id):
+	global game_state
+	if gs_id != game_state.id:
+		game_state = GameState.query.filter_by(id = gs_id).first()
+
+	if game_state.strikes == 2:
+		game_state.strikes = 0
+		incr_out()
+	else:
+		game_state.strikes+=1
+
+	return write_game_state()
+
+def write_game_state():
+	db.session.add(game_state)
+	db.session.commit()
+
+	return jsonify(game_state_schema.dump(game_state).data)
+
+def incr_out():
+	global game_state
+	if game_state.outs == 2:
+		game_state.outs = 0
+		incr_inning()
+	else:
+		game_state.outs+=1
+
+def incr_inning():
+	global game_state
+	if game_state.batting:
+		game_state.inning+=1
+		game_state.batting = 0
+	else:
+		game_state.batting = 1
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6003)
+	app.run(host='0.0.0.0', port=6003)
