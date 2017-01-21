@@ -55,24 +55,24 @@ def new_game():
 	
 	return write_game_state()
     
-@app.route('/baseball/game-state/<int:gs_id>')
+@app.route('/baseball/<int:gs_id>/game-state')
 def get_game_state(gs_id):
 	global game_state
 	game_state = GameState.query.filter_by(id = gs_id).first()
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
-@app.route('/baseball/game-state/current')
+@app.route('/baseball/current/game-state')
 def current_game_state():
 	global game_state
 	game_state = GameState.query.order_by('-gs_id').first()
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
-@app.route('/baseball/hit/<int:gs_id>/<int:hit_num>')
+@app.route('/baseball/<int:gs_id>/hit/<int:hit_num>')
 def hit(gs_id, hit_num):
 	global game_state
-	bases = [1, game_state.base1, game_state.base2, game_state.base3]
+	bases = [1, game_state.base1, game_state.base2, game_state.base3] 
 	if 0 in bases: bases.remove(0)
 	empty_bases = []
 
@@ -91,7 +91,7 @@ def hit(gs_id, hit_num):
 
 	return write_game_state()
 
-@app.route('/baseball/steal/<int:gs_id>')
+@app.route('/baseball/<int:gs_id>/steal')
 def steal(gs_id):
 	global game_state
 	rev_bases = [game_state.base3, game_state.base2, game_state.base1]
@@ -110,7 +110,7 @@ def steal(gs_id):
 
 	return write_game_state()
 
-@app.route('/baseball/pick/<int:gs_id>')
+@app.route('/baseball/<int:gs_id>/pick')
 def pick(gs_id):
 	global game_state
 
@@ -133,7 +133,7 @@ def incr_runs(runs):
 		game_state.score2+=runs
 
 
-@app.route('/baseball/out/<int:gs_id>')
+@app.route('/baseball/<int:gs_id>/out')
 def out(gs_id):
 	global game_state
 	if gs_id != game_state.id:
@@ -143,7 +143,7 @@ def out(gs_id):
 
 	return write_game_state()
 
-@app.route('/baseball/strike/<int:gs_id>')
+@app.route('/baseball/<int:gs_id>/strike')
 def strike(gs_id):
 	global game_state
 	if gs_id != game_state.id:
