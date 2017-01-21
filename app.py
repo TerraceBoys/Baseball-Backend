@@ -69,6 +69,70 @@ def current_game_state():
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
+@app.route('/baseball/hit/<int:gs_id>/<int:hit_num>')
+def hit(gs_id, hit_num):
+	global game_state
+	bases = [1, game_state.base1, game_state.base2, game_state.base3]
+	if 0 in bases: bases.remove(0)
+	empty_bases = []
+
+	for x in range (hit_num - 1):
+		empty_bases = [0] + empty_bases
+		if 0 in bases: bases.remove(0)
+
+	bases = empty_bases + bases
+	runs = bases[3:].count(1)
+
+	game_state.base1 = bases[0]
+	game_state.base2 = bases[1]
+	game_state.base3 = bases[2]
+
+	incr_runs(runs)
+
+	return write_game_state()
+
+@app.route('/baseball/steal/<int:gs_id>')
+def steal(gs_id):
+	global game_state
+	rev_bases = [game_state.base3, game_state.base2, game_state.base1]
+	runner = rev_bases.index(1)
+	rev_bases[runner] = 0
+	rev_bases.insert(runner, 1)
+	
+	bases = rev_bases[::-1]
+	runs = bases[3:].count(1)
+
+	game_state.base1 = bases[0]
+	game_state.base2 = bases[1]
+	game_state.base3 = bases[2]
+
+	incr_runs(runs)
+
+	return write_game_state()
+
+@app.route('/baseball/pick/<int:gs_id>')
+def pick(gs_id):
+	global game_state
+
+	if game_state.base3:
+		game_state.base3 = 0
+	elif game_state.base2:
+		game_state.base2 = 0
+	elif game_state.base1:
+		game_state.base1 = 0
+
+	incr_out()
+
+	return write_game_state()
+
+def incr_runs(runs):
+	global game_state
+	if not game_state.batting:
+		game_state.score1+=runs
+	else:
+		game_state.score2+=runs
+
+
 @app.route('/baseball/out/<int:gs_id>')
 def out(gs_id):
 	global game_state
@@ -117,4 +181,5 @@ def incr_inning():
 
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', port=6003)
+	#app.run(host='0.0.0.0', port=6003)
+	app.run(port=6003)
