@@ -181,5 +181,4 @@ def incr_inning():
 
 
 if __name__ == '__main__':
-	#app.run(host='0.0.0.0', port=6003)
-	app.run(port=6003)
+	app.run(host='0.0.0.0', port=6003)
