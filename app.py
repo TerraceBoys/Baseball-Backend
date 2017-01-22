@@ -86,6 +86,7 @@ def hit(gs_id, hit_num):
 	game_state.base1 = bases[0]
 	game_state.base2 = bases[1]
 	game_state.base3 = bases[2]
+        game_state.strikes = 0
 
 	incr_runs(runs)
 
@@ -150,7 +151,6 @@ def strike(gs_id):
 		game_state = GameState.query.filter_by(id = gs_id).first()
 
 	if game_state.strikes == 2:
-		game_state.strikes = 0
 		incr_out()
 	else:
 		game_state.strikes+=1
@@ -165,6 +165,7 @@ def write_game_state():
 
 def incr_out():
 	global game_state
+        game_state.strikes = 0
 	if game_state.outs == 2:
 		game_state.outs = 0
 		incr_inning()
@@ -173,6 +174,9 @@ def incr_out():
 
 def incr_inning():
 	global game_state
+        game_state.base1 = 0
+        game_state.base2 = 0
+        game_state.base3 = 0
 	if game_state.batting:
 		game_state.inning+=1
 		game_state.batting = 0
