@@ -3,12 +3,17 @@ from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+import config
+import requests
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/baseball'
 CORS(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+
+matrix_url = config.MATRIX_HOST + '/baseball'
+matrix_switch_app_url = config.MATRIX_HOST + '/switch-app'
 
 class GameState(db.Model):
 	id = db.Column('gs_id', db.Integer, primary_key = True)
@@ -46,6 +51,9 @@ def index():
 
 @app.route('/baseball')
 def baseball():
+    game_data = game_state_schema.dump(game_state).data 
+    game_data['mode'] = 'baseball'
+    requests.post(matrix_switch_app_url, data=game_data)
     return "Welcome to Baseball with the Terrace Boys!"
 
 @app.route('/baseball/new-game')
@@ -160,8 +168,9 @@ def strike(gs_id):
 def write_game_state():
 	db.session.add(game_state)
 	db.session.commit()
-
-	return jsonify(game_state_schema.dump(game_state).data)
+        game_data = game_state_schema.dump(game_state).data
+        requests.post(matrix_url, data=game_data)
+        return jsonify(game_data)
 
 def incr_out():
 	global game_state
