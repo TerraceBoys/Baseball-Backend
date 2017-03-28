@@ -31,21 +31,21 @@ def baseball():
 @app.route('/baseball/new-game')
 def new_game():
 	global game_state
-	game_state = GameState()
+	game_state = models.GameState()
 	
 	return write_game_state()
     
 @app.route('/baseball/<int:gs_id>/game-state')
 def get_game_state(gs_id):
 	global game_state
-	game_state = GameState.query.filter_by(id = gs_id).first()
+	game_state = models.GameState.query.filter_by(id = gs_id).first()
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
 @app.route('/baseball/current/game-state')
 def current_game_state():
 	global game_state
-	game_state = GameState.query.order_by('-gs_id').first()
+	game_state = models.GameState.query.order_by('-gs_id').first()
 	
 	return jsonify(game_state_schema.dump(game_state).data)
 
@@ -118,7 +118,7 @@ def incr_runs(runs):
 def out(gs_id):
 	global game_state
 	if gs_id != game_state.id:
-		game_state = GameState.query.filter_by(id = gs_id).first()
+		game_state = models.GameState.query.filter_by(id = gs_id).first()
 
 	incr_out()
 
@@ -128,7 +128,7 @@ def out(gs_id):
 def strike(gs_id):
 	global game_state
 	if gs_id != game_state.id:
-		game_state = GameState.query.filter_by(id = gs_id).first()
+		game_state = models.GameState.query.filter_by(id = gs_id).first()
 
 	if game_state.strikes == 2:
 		incr_out()
