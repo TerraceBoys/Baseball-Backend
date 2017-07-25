@@ -7,7 +7,7 @@ import config
 import requests
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/baseball'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/baseball_2'
 CORS(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -23,15 +23,16 @@ def index():
 
 @app.route('/baseball')
 def baseball():
-    game_data = game_state_schema.dump(game_state).data 
-    game_data['mode'] = 'baseball'
-    requests.post(matrix_switch_app_url, data=game_data)
-    return "Welcome to Baseball with the Terrace Boys!"
+	game_data = game_state_schema.dump(game_state).data 
+	game_data['mode'] = 'baseball'
+	requests.post(matrix_switch_app_url, data=game_data)
+	return "Welcome to Baseball with the Terrace Boys!"
 
 @app.route('/baseball/new-game')
 def new_game():
 	global game_state
-	game_state = models.GameState()
+	current_turn = models.GameTurn()
+	game_state = models.GameState(current_turn.id)
 	
 	return write_game_state()
     
@@ -66,7 +67,7 @@ def hit(gs_id, hit_num):
 	game_state.base1 = bases[0]
 	game_state.base2 = bases[1]
 	game_state.base3 = bases[2]
-        game_state.strikes = 0
+	game_state.strikes = 0
 
 	incr_runs(runs)
 
@@ -134,15 +135,15 @@ def strike(gs_id):
 		incr_out()
 	else:
 		game_state.strikes+=1
-
+		
 	return write_game_state()
 
 def write_game_state():
 	db.session.add(game_state)
 	db.session.commit()
-        game_data = game_state_schema.dump(game_state).data
-        requests.post(matrix_url, data=game_data)
-        return jsonify(game_data)
+	game_data = game_state_schema.dump(game_state).data
+	requests.post(matrix_url, data=game_data)
+	return jsonify(game_data)
 
 def incr_out():
 	global game_state
@@ -166,8 +167,10 @@ def incr_inning():
 
 
 if __name__ == '__main__':
-        global game_state_schema
-        global game_state
-        game_state_schema = models.GameStateSchema()
-        game_state = models.GameState.query.order_by('-gs_id').first()
+	global game_state_schema
+	global game_state
+	global current_turn
+	game_state_schema = models.GameStateSchema()
+	game_state = models.GameState.query.order_by('-gs_id').first()
+	current_turn = game_state.current_turn
 	app.run(host='0.0.0.0', port=6003)
